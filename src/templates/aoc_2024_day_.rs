@@ -10,13 +10,13 @@ pub fn run() {
 
     let input = input::load_file("2024", "01");
 
-    let result = process_1(&sample_input);
+    let result = process_1(sample_input);
     assert_eq!(result, 0);
 
     let result = process_1(&input);
     assert_eq!(result, 0);
 
-    let result = process_2(&sample_input);
+    let result = process_2(sample_input);
     assert_eq!(result, 0);
 
     let result = process_2(&input);
