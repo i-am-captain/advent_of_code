@@ -1,0 +1,47 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		// The input should not be shared publicy, so this points to a private repository that i cloned next to this repo.
+		{
+			"path": "../aoc_input"
+		}
+	],
+	"settings": {
+		"diffEditor.ignoreTrimWhitespace": false,
+		"rust-analyzer.debug.openDebugPane": true,
+		"rust-analyzer.debug.engine": "vadimcn.vscode-lldb",
+		"rust-analyzer.check.command": "clippy",
+		"[rust]": {
+			"editor.defaultFormatter": "rust-lang.rust-analyzer",
+			"editor.formatOnSave": true,
+		},
+		"rust-analyzer.linkedProjects": [
+			"./Cargo.toml"
+		],
+		"rust-analyzer.showUnlinkedFileNotification": false,
+	},
+	"extensions": {
+		"recommendations": [
+			"gruntfuggly.todo-tree",
+			"rust-lang.rust-analyzer",
+			"tamasfe.even-better-toml",
+			"usernamehw.errorlens",
+			"vadimcn.vscode-lldb"
+		]
+	},
+	"launch": {
+		"version": "0.2.0",
+		"configurations": [
+			{
+				"type": "lldb",
+				"request": "launch",
+				"name": "Debug",
+				"program": "${workspaceFolder}/target/debug/advent_of_code",
+				"args": [],
+				"cwd": "${workspaceFolder}"
+			}
+		]
+	},
+}
