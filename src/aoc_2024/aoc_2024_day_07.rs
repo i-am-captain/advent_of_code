@@ -130,7 +130,7 @@ fn count_operator_combinations(
             // count all combinations that lead to expected result
             found_combinations += 1;
             // could break out for performance
-            // break;
+            break;
         }
 
         // #2: Update operator selector, one by one. Like adding 1 to a number, but with a vector.
