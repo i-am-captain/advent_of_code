@@ -1,3 +1,5 @@
+use rayon::iter::{ParallelBridge, ParallelIterator};
+
 use crate::input;
 
 #[test]
@@ -49,6 +51,7 @@ pub fn test_operator_generator() {
 fn process_1(input: &str) -> i64 {
     let result: i64 = input
         .split("\n")
+        .par_bridge()
         .map(|line| {
             let line_split: Vec<&str> = line.split_whitespace().collect();
 
@@ -66,10 +69,11 @@ fn process_1(input: &str) -> i64 {
                 .flat_map(|s| s.parse().ok())
                 .collect();
 
-            let operators = vec!["+", "*"];
+            // just for visualization
+            let operators = ["+", "*"];
 
             let found_combinations =
-                count_operator_combinations(values, operators, expected_result);
+                count_operator_combinations(values, operators.len(), expected_result);
 
             if found_combinations > 0 {
                 return expected_result;
@@ -83,6 +87,7 @@ fn process_1(input: &str) -> i64 {
 fn process_2(input: &str) -> i64 {
     let result: i64 = input
         .split("\n")
+        .par_bridge()
         .map(|line| {
             let line_split: Vec<&str> = line.split_whitespace().collect();
 
@@ -100,10 +105,11 @@ fn process_2(input: &str) -> i64 {
                 .flat_map(|s| s.parse().ok())
                 .collect();
 
-            let operators = vec!["+", "*", "||"];
+            // just for visualization
+            let operators = ["+", "*", "||"];
 
             let found_combinations =
-                count_operator_combinations(values, operators, expected_result);
+                count_operator_combinations(values, operators.len(), expected_result);
 
             if found_combinations > 0 {
                 return expected_result;
@@ -164,10 +170,10 @@ impl Iterator for OperatorCombinationGenerator {
 
 fn count_operator_combinations(
     values: Vec<i64>,
-    operators: Vec<&str>,
+    operator_count: usize,
     expected_result: i64,
 ) -> i32 {
-    let mut operator_cg = OperatorCombinationGenerator::new(vec![0; values.len()], operators.len());
+    let mut operator_cg = OperatorCombinationGenerator::new(vec![0; values.len()], operator_count);
 
     let mut search = true;
     let found_combinations = operator_cg
@@ -176,14 +182,12 @@ fn count_operator_combinations(
             let mut sum = 0;
             values.iter().enumerate().for_each(|(i, value)| {
                 let op_index = operator_selection[i];
-                let op = operators[op_index];
 
-                // we could just use the op_index and delete the operators vec, but this way it is easier to follow.
-                match op {
-                    "+" => sum += value,
-                    "*" => sum *= value,
+                match op_index {
+                    0 => sum += value,
+                    1 => sum *= value,
                     // 12 || 345 = 12345, shift left value in base 10 to the left and add right value
-                    "||" => sum = sum * 10_i64.pow(value.to_string().len() as u32) + value,
+                    2 => sum = sum * 10_i64.pow(value.to_string().len() as u32) + value,
                     _ => (),
                 }
             });
