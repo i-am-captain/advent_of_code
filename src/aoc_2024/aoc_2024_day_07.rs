@@ -31,6 +31,21 @@ pub fn run() {
     assert_eq!(result, 271691107779347);
 }
 
+#[test]
+pub fn test_operator_generator() {
+    // 5 values, two operators
+    let mut operator_cg = OperatorCombinationGenerator::new(vec![0; 5], 2);
+
+    let count = operator_cg.inspect(|ops| println!("{:?}", ops)).count();
+    assert_eq!(count, 2_usize.pow(5));
+
+    // 4 values, 3 operators
+    let mut operator_cg = OperatorCombinationGenerator::new(vec![0; 4], 3);
+
+    let count = operator_cg.inspect(|ops| println!("{:?}", ops)).count();
+    assert_eq!(count, 3_usize.pow(4));
+}
+
 fn process_1(input: &str) -> i64 {
     let result: i64 = input
         .split("\n")
@@ -99,44 +114,33 @@ fn process_2(input: &str) -> i64 {
     result
 }
 
-fn count_operator_combinations(
-    values: Vec<i64>,
-    operators: Vec<&str>,
-    expected_result: i64,
-) -> i32 {
-    let mut operator_selection: Vec<usize> = vec![0; values.len()];
+struct OperatorCombinationGenerator {
+    operator_selection: Vec<usize>,
+    operator_count: usize,
+    current_position: usize,
+}
+impl OperatorCombinationGenerator {
+    fn new(operator_selection: Vec<usize>, operator_count: usize) -> OperatorCombinationGenerator {
+        OperatorCombinationGenerator {
+            operator_selection,
+            operator_count,
+            current_position: 0,
+        }
+    }
+}
+impl Iterator for OperatorCombinationGenerator {
+    type Item = Vec<usize>;
 
-    let mut search = true;
-    let mut found_combinations = 0;
-    while search {
-        // #1: check if current combination of operator selectors leads to ecpected result.
-
-        let mut sum = 0;
-        values.iter().enumerate().for_each(|(i, value)| {
-            let op_index = operator_selection[i];
-            let op = operators[op_index];
-
-            // we could just use the op_index and delete the operators vec, but this way it is easier to follow.
-            match op {
-                "+" => sum += value,
-                "*" => sum *= value,
-                // 12 || 345 = 12345, shift left value in base 10 to the left and add right value
-                "||" => sum = sum * 10_i64.pow(value.to_string().len() as u32) + value,
-                _ => (),
-            }
-        });
-
-        if sum == expected_result {
-            // count all combinations that lead to expected result
-            found_combinations += 1;
-            // could break out for performance
-            break;
+    fn next(&mut self) -> Option<Vec<usize>> {
+        if self.current_position == 0 {
+            // Special case for first element, return initial value without incresing anything, to also get [0, 0, 0, ...].
+            self.current_position += 1;
+            return Some(self.operator_selection.clone());
         }
 
-        // #2: Update operator selector, one by one. Like adding 1 to a number, but with a vector.
-        let base = operators.len();
+        let base = self.operator_count;
         let mut add_next = 1;
-        operator_selection
+        self.operator_selection
             .iter_mut()
             .enumerate()
             .for_each(|(i, sel_value)| {
@@ -147,11 +151,49 @@ fn count_operator_combinations(
                     *sel_value = 0;
                 }
             });
-
         if add_next > 0 {
             // We overlowed the operator selection vector, so we checked every possible combination. Stop searching.
-            search = false;
+            self.current_position += 1;
+            return None;
         }
+        // Don't care abot complex lending iterators or stuff, just clone the vector, it isn't that big.
+        self.current_position += 1;
+        Some(self.operator_selection.clone())
     }
+}
+
+fn count_operator_combinations(
+    values: Vec<i64>,
+    operators: Vec<&str>,
+    expected_result: i64,
+) -> i32 {
+    let mut operator_cg = OperatorCombinationGenerator::new(vec![0; values.len()], operators.len());
+
+    let mut search = true;
+    let found_combinations = operator_cg
+        .map(|operator_selection| {
+            // check if current combination of operator selectors leads to ecpected result.
+            let mut sum = 0;
+            values.iter().enumerate().for_each(|(i, value)| {
+                let op_index = operator_selection[i];
+                let op = operators[op_index];
+
+                // we could just use the op_index and delete the operators vec, but this way it is easier to follow.
+                match op {
+                    "+" => sum += value,
+                    "*" => sum *= value,
+                    // 12 || 345 = 12345, shift left value in base 10 to the left and add right value
+                    "||" => sum = sum * 10_i64.pow(value.to_string().len() as u32) + value,
+                    _ => (),
+                }
+            });
+
+            if sum == expected_result {
+                // count all combinations that lead to expected result
+                return 1;
+            }
+            0
+        })
+        .sum();
     found_combinations
 }
