@@ -20,7 +20,7 @@ pub fn run() {
     assert_eq!(result, 2858);
 
     let result = process_2(&input);
-    assert_eq!(result, 0);
+    assert_eq!(result, 6488291456470);
 }
 
 #[derive(Debug, Clone, PartialEq)]
