@@ -1,6 +1,6 @@
-use std::{collections::HashMap, fmt::Display};
+use std::collections::HashMap;
 
-use crate::{input, utils::maps::Map};
+use crate::input;
 
 #[test]
 pub fn test_all() {
@@ -33,7 +33,7 @@ pub fn run() {
     assert_eq!(result, 34);
 
     let result = process_2(&input);
-    assert_eq!(result, 0);
+    assert_eq!(result, 839);
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -156,10 +156,10 @@ fn process_2(input: &str) -> i64 {
             }
         })
     });
-    fields.iter().for_each(|line| {
-        line.iter().for_each(|element| print!("{}", element.ch));
-        println!();
-    });
+    // fields.iter().for_each(|line| {
+    //     line.iter().for_each(|element| print!("{}", element.ch));
+    //     println!();
+    // });
 
     let mut cross_elements: Vec<Element> = Vec::new();
 
@@ -241,10 +241,10 @@ fn process_2(input: &str) -> i64 {
             });
         });
     });
-    updated_fields.iter().for_each(|line| {
-        line.iter().for_each(|element| print!("{}", element.ch));
-        println!();
-    });
+    // updated_fields.iter().for_each(|line| {
+    //     line.iter().for_each(|element| print!("{}", element.ch));
+    //     println!();
+    // });
 
     cross_elements.len() as i64
 }
