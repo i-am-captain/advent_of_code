@@ -4,6 +4,7 @@
 
 pub mod aoc_2024;
 pub mod input;
+pub mod utils;
 
 pub fn run_all() {
     aoc_2024::run_all();
