@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use crate::input;
+use crate::{input, utils::maps::Map};
 
 #[test]
 pub fn test_all() {
@@ -26,6 +26,7 @@ pub fn run() {
     let result = process_1(sample_input);
     assert_eq!(result, 0);
 
+    return;
     let result = process_1(&input);
     assert_eq!(result, 0);
 
@@ -37,6 +38,9 @@ pub fn run() {
 }
 
 fn process_1(input: &str) -> i64 {
+    let map: Map<char> = Map::<char>::parse(input);
+    println!("{}", map);
+
     0
 }
 
