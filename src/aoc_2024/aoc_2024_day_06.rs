@@ -1,4 +1,7 @@
-use std::fmt::{Debug, Display};
+use std::{
+    collections::HashMap,
+    fmt::{Debug, Display},
+};
 
 use rayon::iter::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
 
@@ -253,11 +256,30 @@ fn check_map(map: &Map, original_guard: &Position, y: usize, x: usize) -> usize 
     map.fields[y][x] = '#';
 
     let mut loop_detected = false;
-    let mut history: Vec<Position> = Vec::new();
+    // a bit more complex history map than a simple vec.
+    let mut history: HashMap<usize, HashMap<usize, Vec<Position>>> = HashMap::new();
     while !guard.is_out(&map) {
-        history.push(guard.clone());
+        let guard_x = guard.x as usize;
+        let guard_y = guard.y as usize;
+
+        history
+            .entry(guard_y)
+            .or_default()
+            .entry(guard_x)
+            .or_default()
+            .push(guard.clone());
+
         guard.move_step(&mut map);
-        if history.contains(&guard) {
+
+        let guard_x = guard.x as usize;
+        let guard_y = guard.y as usize;
+
+        if history
+            .get(&guard_y)
+            .and_then(|map| map.get(&guard_x))
+            .map(|vec| vec.contains(&guard))
+            .unwrap_or(false)
+        {
             // loop detected
             loop_detected = true;
             break;
