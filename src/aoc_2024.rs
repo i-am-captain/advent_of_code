@@ -9,8 +9,9 @@ pub mod aoc_2024_day_08;
 pub mod aoc_2024_day_09;
 pub mod aoc_2024_day_10;
 pub mod aoc_2024_day_11;
+pub mod aoc_2024_day_12;
 
 // To run way faster in release compile mode: "cargo run --release"
 pub(crate) fn run_all() {
-    aoc_2024_day_11::run();
+    aoc_2024_day_12::run();
 }
