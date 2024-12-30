@@ -1,6 +1,6 @@
 use colored::{ColoredString, Colorize};
 use rand::{rngs::StdRng, RngCore, SeedableRng};
-use std::collections::HashMap;
+use std::{cmp::Ordering, collections::HashMap};
 
 use crate::input;
 
@@ -51,20 +51,15 @@ MMMISSJEEE";
 
     let result = process_1(&input);
     assert_eq!(result, 1400386);
-    return;
 
-    // let result = process_2(sample_input);
-    // assert_eq!(result, 0);
-
-    // let result = process_2(&input);
-    // assert_eq!(result, 0);
+    let result = process_2(&input);
+    assert_eq!(result, 851994);
 }
 
 fn process_1(input: &str) -> usize {
     let map = parse_map(input);
 
     // Regions are created, now try calculating perimeter
-
     let sum: usize = map
         .iter()
         .map(|(key, regions)| {
@@ -74,19 +69,35 @@ fn process_1(input: &str) -> usize {
                 .sum::<usize>()
         })
         .sum();
-
     // print_regions(&map);
-
     sum
 }
 
-fn process_2(input: &str) -> i64 {
-    0
+fn process_2(input: &str) -> usize {
+    let map = parse_map(input);
+
+    // Regions are created, now try calculating perimeter
+    let sum: usize = map
+        .iter()
+        .map(|(key, regions)| {
+            regions
+                .iter()
+                .map(|region| region.calculate_perimeter_length() * region.points.len())
+                .sum::<usize>()
+        })
+        .sum();
+    // print_regions(&map);
+    sum
 }
 
 fn parse_map(input: &str) -> HashMap<char, Vec<Region>> {
     // Recursively searching for neighbors (DFS) would probably be faster and simpler, but i want to try something different here. Declare each element as region and then merge regions of same kind.
     let mut map: HashMap<char, Vec<Region>> = HashMap::new();
+
+    // Two possible optimizations:
+    // 1. Merge regions directly on creation, saves the while loop
+    // 2. Merge regions by checking direct neighbor Points only. Would require some back reference from Point to Region.
+    // -> But it's fast enough for playing around as it is.
 
     // Parse all elements into separate regions.
     input
@@ -210,16 +221,17 @@ impl Point {
     /// Returns all up to 8 neighboring points. x and y can be negative for edge cases.
     /// ch is copied over
     fn create_neighbors_8(&self) -> Vec<Point> {
-        let mut points: Vec<Point> = Vec::new();
-        for dy in -1..2 {
-            for dx in -1..2 {
-                if dy == 0 && dx == 0 {
-                    continue;
-                }
-                let point = Point::new(self.x + dx, self.y + dy, self.ch);
-                points.push(point);
-            }
-        }
+        let mut points = vec![
+            // start top left and go clockwise
+            Point::new(self.x - 1, self.y - 1, self.ch),
+            Point::new(self.x, self.y - 1, self.ch),
+            Point::new(self.x + 1, self.y - 1, self.ch),
+            Point::new(self.x + 1, self.y, self.ch),
+            Point::new(self.x + 1, self.y + 1, self.ch),
+            Point::new(self.x, self.y + 1, self.ch),
+            Point::new(self.x - 1, self.y + 1, self.ch),
+            Point::new(self.x - 1, self.y, self.ch),
+        ];
         points
     }
 
@@ -234,6 +246,31 @@ impl Point {
         ];
         points
     }
+
+    fn get_direction_to(&self, other: &Point) -> Option<Direction> {
+        let x_cmp = self.x.cmp(&other.x);
+        let y_cmp = self.y.cmp(&other.y);
+        let direction: Option<Direction> = match (x_cmp, y_cmp) {
+            (Ordering::Less, Ordering::Less) => None,
+            (Ordering::Less, Ordering::Equal) => Some(Direction::East),
+            (Ordering::Less, Ordering::Greater) => None,
+            (Ordering::Equal, Ordering::Less) => Some(Direction::South),
+            (Ordering::Equal, Ordering::Equal) => None,
+            (Ordering::Equal, Ordering::Greater) => Some(Direction::North),
+            (Ordering::Greater, Ordering::Less) => None,
+            (Ordering::Greater, Ordering::Equal) => Some(Direction::West),
+            (Ordering::Greater, Ordering::Greater) => None,
+        };
+        direction
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
+enum Direction {
+    North,
+    East,
+    South,
+    West,
 }
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
@@ -281,7 +318,62 @@ impl Region {
         border
     }
 
-    fn calculate_perimeter_length(&self) {
-        let border = self.calulate_border();
+    fn calculate_perimeter_length(&self) -> usize {
+        let mut count = self
+            .points
+            .iter()
+            .map(|point| {
+                // neighbor points are indexed like that:
+                // 012
+                // 7#3
+                // 654
+
+                let neighbors: Vec<Point> = point.create_neighbors_8();
+                let mut local_count = 0;
+
+                let in0 = self.points.contains(&neighbors[0]);
+                let in1 = self.points.contains(&neighbors[1]);
+                let in2 = self.points.contains(&neighbors[2]);
+                let in3 = self.points.contains(&neighbors[3]);
+                let in4 = self.points.contains(&neighbors[4]);
+                let in5 = self.points.contains(&neighbors[5]);
+                let in6 = self.points.contains(&neighbors[6]);
+                let in7 = self.points.contains(&neighbors[7]);
+
+                // every inner or outer corner technically adds one more side
+
+                // inner corners
+                if in7 && !in0 && in1 {
+                    local_count += 1;
+                }
+                if in1 && !in2 && in3 {
+                    local_count += 1;
+                }
+                if in3 && !in4 && in5 {
+                    local_count += 1;
+                }
+                if in5 && !in6 && in7 {
+                    local_count += 1;
+                }
+
+                // outer corners
+                if !in7 && !in1 {
+                    local_count += 1;
+                }
+                if !in1 && !in3 {
+                    local_count += 1;
+                }
+                if !in3 && !in5 {
+                    local_count += 1;
+                }
+                if !in5 && !in7 {
+                    local_count += 1;
+                }
+
+                local_count
+            })
+            .sum::<usize>();
+
+        count
     }
 }
